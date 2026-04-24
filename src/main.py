@@ -22,7 +22,7 @@ df["plot_size"] = df["distance_mly"].replace(0, 0.5)
 
 # Make The Milky Way stand out
 df["category"] = df["name"].apply(
-    lambda name: "You are here" if name == "Milky Way" else "Galaxy"
+    lambda name: "You are here" if name == "Milky Way" else "Other galaxies"
 )
 
 df.loc[df["name"] == "Milky Way", "plot_size"] = 3
@@ -43,7 +43,11 @@ fig = px.scatter_3d(
         "category": True
     },
     size="plot_size",
+    # Find the Milk Way Easily
     color="category",
+    # Color By Distance Settings
+    # color="distance_mly",
+    # color_continuous_scale="Viridis",
     size_max=12,
     title="3D Map of Nearby Galaxies"
 )
