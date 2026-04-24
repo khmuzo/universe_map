@@ -1,33 +1,55 @@
+# -----------------------------
+# Imports
+# -----------------------------
 import pandas as pd
 import plotly.express as px
 import numpy as np
 from pathlib import Path
 
+# -----------------------------
+# Setup
+# -----------------------------
 # Ensure outputs folder exists
 Path("outputs").mkdir(exist_ok=True)
 
-# Load real data
-df = pd.read_csv("data/galaxies.csv")
+def load_data(path):
+    return pd.read_csv(path)
+# -----------------------------
+# Load data
+# -----------------------------
+# Load galaxy data from CSV
+df = load_data("data/galaxies.csv")
 
-# Convert degrees → radians
+# -----------------------------
+# Convert RA/DEC to 3D coordinates
+# -----------------------------
+# Convert degrees to radians because NumPy trig functions expect radians
 ra_rad = np.deg2rad(df["ra"])
 dec_rad = np.deg2rad(df["dec"])
 distance = df["distance_mly"]
 
-# Convert spherical → Cartesian coordinates
+# Convert spherical coordinates to Cartesian coordinates
 df["x"] = distance * np.cos(dec_rad) * np.cos(ra_rad)
 df["y"] = distance * np.cos(dec_rad) * np.sin(ra_rad)
 df["z"] = distance * np.sin(dec_rad)
+
+# -----------------------------
+# Prepare plotting helpers
+# -----------------------------
+# Give nearby galaxies a visible marker size
 df["plot_size"] = df["distance_mly"].replace(0, 0.5)
 
-# Make The Milky Way stand out
+# Create a category so the Milky Way can be highlighted separately
 df["category"] = df["name"].apply(
     lambda name: "You are here" if name == "Milky Way" else "Other galaxies"
 )
 
+# Make the Milky Way easier to see
 df.loc[df["name"] == "Milky Way", "plot_size"] = 3
 
-# Plot
+# -----------------------------
+# Build 3D plot
+# -----------------------------
 fig = px.scatter_3d(
     df,
     x="x",
@@ -40,19 +62,15 @@ fig = px.scatter_3d(
         "y": False,
         "z": False,
         "plot_size": False,
-        "category": True
+        "category": True,
     },
     size="plot_size",
-    # Find the Milk Way Easily
     color="category",
-    # Color By Distance Settings
-    # color="distance_mly",
-    # color_continuous_scale="Viridis",
     size_max=12,
     title="3D Map of Nearby Galaxies"
 )
 
-# Make it look like space
+# Make the plot look more like space
 fig.update_layout(
     scene=dict(
         xaxis=dict(showbackground=False),
@@ -64,5 +82,8 @@ fig.update_layout(
     font=dict(color="white")
 )
 
+# -----------------------------
+# Save and show plot
+# -----------------------------
 fig.write_html("outputs/universe_map.html")
 fig.show()
